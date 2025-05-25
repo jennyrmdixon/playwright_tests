@@ -1,8 +1,8 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-  test('Validate Home Page Loads', async ({ page }: { page: Page }, testInfo) => {
-  console.log('Test timeout (ms):', testInfo.timeout);
+test.describe('Smoke Test', () => {
 
+  test('Validate Home Page Loads', async ({ page }) => {
   // Check home page loads
   await page.goto('https://practicesoftwaretesting.com/');
   await expect(page).toHaveURL('https://practicesoftwaretesting.com/');
@@ -11,7 +11,7 @@ import { test, expect, Page } from '@playwright/test';
   await expect(page.getByRole('link', { name: 'Practice Software Testing -' })).toBeVisible();
 });
 
-  test('Validate Link Works', async ({ page }: { page: Page }) => {
+  test('Validate Link Works', async ({ page }) => {
   // Check link can be clicked
   await page.goto('https://practicesoftwaretesting.com/');
   await page.locator('[data-test="nav-categories"]').click();
@@ -19,4 +19,5 @@ import { test, expect, Page } from '@playwright/test';
   await expect(page).toHaveURL('https://practicesoftwaretesting.com/category/hand-tools')
 });
 
+})
 
