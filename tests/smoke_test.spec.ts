@@ -1,8 +1,21 @@
+/**
+ * ================================================================
+ * Smoke Test
+ * ----------------------------------------------------------------
+ * Description : The test is intended as a sanity check to confirm the 
+ *               website can load and is bascially useable. 
+ *               Test cases include:
+ *               (A) Home page loads
+ *               (B) Link can be clicked
+ * Author      : Jenny Dixon
+ * ================================================================
+ */
+
 import { test, expect } from '@playwright/test';
 
 test.describe('Smoke Test', () => {
 
-  test('Validate Home Page Loads', async ({ page }) => {
+  test('Home Page Loads', async ({ page }) => {
   // Check home page loads
   await page.goto('https://practicesoftwaretesting.com/');
   await expect(page).toHaveURL('https://practicesoftwaretesting.com/');
@@ -11,7 +24,7 @@ test.describe('Smoke Test', () => {
   await expect(page.getByRole('link', { name: 'Practice Software Testing -' })).toBeVisible();
 });
 
-  test('Validate Link Works', async ({ page }) => {
+  test('Link Works', async ({ page }) => {
   // Check link can be clicked
   await page.goto('https://practicesoftwaretesting.com/');
   await page.locator('[data-test="nav-categories"]').click();
