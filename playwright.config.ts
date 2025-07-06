@@ -52,6 +52,7 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
 
+
     /* Test against mobile viewports. */
     // {
     //   name: 'Mobile Chrome',
@@ -72,6 +73,7 @@ export default defineConfig({
     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     // },
   ],
+  timeout: 90000, // 90 seconds per test
 
   /* Run your local dev server before starting the tests */
   // webServer: {

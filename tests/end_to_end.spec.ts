@@ -15,70 +15,187 @@ import { test, expect } from '@playwright/test';
 
 test.describe('E2E Checkout Test', () => {
 
-let item_1: { name: string | null; price: string | null } = {
-  name: null,
-  price: null
-};
-let item_2 = {};
-let item_3 = {};
+  let item_1: { name: string | null; price: string | null } = {
+    name: null,
+    price: null
+  };
+  let item_2: { name: string | null; price: string | null } = {
+    name: null,
+    price: null
+  };
+  let item_3: { name: string | null; price: string | null } = {
+    name: null,
+    price: null
+  };
 
-test('Search for items add 2 items to cart', async ({ page }) => {
-  // Begin on home page
-  await page.goto('https://practicesoftwaretesting.com/');
-  await expect(page).toHaveURL('https://practicesoftwaretesting.com/');
-
-  // Enter search term
-  await page.locator('[data-test="search-query"]').click();
-  await page.locator('[data-test="search-query"]').fill('hammer');
-  await page.locator('[data-test="search-submit"]').click();
-  
-  // Capture produce name and price of first search result
-  await expect(page.locator('[data-test="search-term"]')).toHaveText('hammer');
-  await expect(page.locator('[data-test="search_completed"]')).toBeVisible();
-  const PRODUCT_CARD = page.locator('[data-test^="product-"]').first();
-  item_1.name = await PRODUCT_CARD.locator('[data-test="product-name"]').textContent();
-  item_1.price = await PRODUCT_CARD.locator('[data-test="product-price"]').textContent();
-  // Remove dollar symbol, if price exists
-  if(item_1.price){
-    item_1.price = item_1.price.replace('$','');
+  let normalizePrice = (input) => {
+    return String(input).trim().replace(/\$/g, '');
   }
-  // Click on first product
-  // Confirm correct page loads, but don't add to cart
-  await PRODUCT_CARD.click();
-  expect(item_1.name).not.toBeNull();
-  await expect(page.locator('[data-test="product-name"]')).toHaveText(item_1.name as string);
-  expect(item_1.price).not.toBeNull();
-  await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_1.price as string));
+
+  test('Search for items add 2 differnt items to cart', async ({ page }) => {
+    // Define frequently used locators
+    const LOCATOR_PRODUCT_NAME = page.locator('[data-test="product-name"]');
+
+    // NAVIGATE TO FIRST PRODUCT, BUT DON'T ADD TO CART
+    // Begin on home page
+    await page.goto('https://practicesoftwaretesting.com/');
+    await expect(page).toHaveURL('https://practicesoftwaretesting.com/');
+
+    // Enter search term
+    await page.locator('[data-test="search-query"]').click();
+    await page.locator('[data-test="search-query"]').fill('hammer');
+    await page.locator('[data-test="search-submit"]').click();
+
+    // Capture produce name and price of first search result
+    await expect(page.locator('[data-test="search-term"]')).toHaveText('hammer');
+    await expect(page.locator('[data-test="search_completed"]')).toBeVisible();
+    const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
+    item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
+    item_1.price = await PRODUCT_1_CARD.locator('[data-test="product-price"]').textContent();
+    // Remove dollar symbol, if price exists
+    if (item_1.price) {
+      item_1.price = item_1.price.replace('$', '');
+    }
+    // Click on first product
+    // Confirm correct page loads, but don't add to cart
+    await PRODUCT_1_CARD.click();
+    expect(item_1.name).not.toBeNull();
+    await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_1.name as string);
+    expect(item_1.price).not.toBeNull();
+    await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_1.price as string));
+
+    // NAVIGATE TO SECOND PRODUCT, ADD TO CART
+    // Click on first recommended product
+    await page.getByText('More information').first().click();
+
+    // Wait for new product page to load, as indicated by updated product name
+    // Ignores spaces added or removed temporarily during the loading process
+
+    // Remove leading or trailing spaces
+    const normalize = (text: string | null) =>
+      (text ?? "").trim().replace(/\s+/g, " ");
+    // Get the initial product name, with leading/trailing spaces removed
+    let initialNormalized = normalize(item_1.name);
+
+    await expect.poll(async () => {
+      const currentRaw = await LOCATOR_PRODUCT_NAME.textContent();
+      const currentNormalized = normalize(currentRaw);
+
+      // Return the normalized text to decide if poll should end
+      return currentNormalized;
+    }).not.toBe(initialNormalized)
+
+    // Capture details of new product page
+    item_2.name = await LOCATOR_PRODUCT_NAME.textContent();
+    item_2.price = await page.locator('[data-test="unit-price"]').textContent();
+    await expect(item_1.name).not.toEqual(item_2.name);
+
+    // Add current item to cart
+    await page.locator('[data-test="add-to-cart"]').click();
+    // Validate cart displays 1 item added
+    await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("1");
+
+    // NAVIGATE TO THIRD PRODUCT, ADD TO CART
+    await page.locator('[data-test="nav-categories"]').click();
+    await page.locator('[data-test="nav-power-tools"]').click();
+    //Wait for products to fully load after clicking on page 
+    await page.locator('[data-test^="product-"]').first().waitFor({ state: 'visible' });
+    // Filter by first category
+    await (page.locator('[data-test^="category-"]').nth(1)).check();
+
+    const PRODUCT_3_CARD = page.locator('[data-test^="product-"]').first();
+    item_3.name = await PRODUCT_3_CARD.locator('[data-test="product-name"]').textContent();
+    item_3.price = await PRODUCT_3_CARD.locator('[data-test="product-price"]').textContent();
+    item_3.price = normalizePrice(item_3.price);
+
+    // Click on third product
+    await PRODUCT_3_CARD.click();
+    expect(item_3.name).not.toBeNull();
+    await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_3.name as string);
+    expect(item_3.price).not.toBeNull();
+    await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_3.price as string));
+
+    // Add current item to cart
+    await page.locator('[data-test="add-to-cart"]').click();
+    // Validate cart displays 1 item added
+    await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2");
+
+    // Wait until "Added to Cart" pop up is not obstructing cart icon, then navigate to cart
+    const CART_BUTTON = page.locator('[data-test="nav-cart"]');
+
+    await expect.poll(async () => {
+      try {
+        await CART_BUTTON.click({ trial: true });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+      {
+        timeout: 6000, // ⏱️ Set timeout to 6000 milliseconds (6 seconds)
+      }
+    ).toBe(true);
+    await CART_BUTTON.click();
+
+    // Validate 2 items are present, prices match what was gotten from home page
+
+    // Determine expected display order of products, based on alpha order
+    let item2NameNorm = normalize(item_2.name);
+    let item3NameNorm = normalize(item_3.name);
+
+    let item2Order;
+    let item3Order;
+
+    if (item2NameNorm < item3NameNorm) {
+      item2Order = 0;
+      item3Order = 1;
+    }
+    else if (item3NameNorm > item2NameNorm) {
+      item3Order = 0;
+      item2Order = 1;
+    }
+    else {
+      console.log("error")
+    }
+
+    // Check details of item 2
+    await expect((page.locator('[data-test = "product-title"]').nth(item2Order))).toHaveText(item2NameNorm);
+    const normPrice1 = normalizePrice(await page.locator('[data-test="product-price"]').nth(item2Order).textContent());
+    expect(normPrice1).toBe(item_2.price);
+
+    // Check details of item 3
+    await expect((page.locator('[data-test = "product-title"]').nth(item3Order))).toHaveText(item3NameNorm);
+    const normPrice2 = normalizePrice(await page.locator('[data-test="product-price"]').nth(item3Order).textContent());
+    expect(normPrice2).toBe(item_3.price);
+
+    let cartTotal = (parseFloat(normPrice1) + parseFloat(normPrice2)).toString();
+    let normalizedTotal = normalizePrice(await page.locator('[data-test = "cart-total"]').textContent());
+    expect(normalizedTotal).toEqual(cartTotal);
 
 
+    await page.getByRole('spinbutton').nth(item2Order).click();
+    await page.getByRole('spinbutton').nth(item2Order).fill('2');
+    //De-select page counter box
+    await page.locator("body").click({ position: { x: 0, y: 0 } });
 
-// // await page.goto('https://practicesoftwaretesting.com/product/01JW49MHHG4P2061T4T1SD2FQD');
-//   await page.getByRole('link', { name: 'Thor Hammer Thor Hammer More' }).click();
-//    //Validate page appears with a different product name (what was shown before)
 
-//   await page.locator('[data-test="add-to-cart"]').click();
-//   //Validate cart icon displays 1 item is in cart
+    let newExpectedTotal = parseFloat(cartTotal) + parseFloat(normPrice1);
 
- 
-//   await page.locator('[data-test="nav-categories"]').click();
-//   await page.locator('[data-test="nav-power-tools"]').click();
-//   await page.locator('[data-test="category-01JW49MHER9CJYK8D8GZ1PBGES"]').check();
-//   await page.locator('[data-test="product-01JW49MHKPM0XFJGQ48T9PX9E5"]').click();
+    await expect.poll(async () => {
+      try {
+        const newTotal = normalizePrice(await page.locator('[data-test = "cart-total"]').textContent());
+        const newTotalParse = parseFloat(newTotal);
+        return newTotalParse;
+      } catch {
+        return false;
+      }
+    },
+      {
+        timeout: 5000, // ⏱️ Set timeout to 6000 milliseconds (6 seconds)
+      }
+    ).toBe(newExpectedTotal)
 
-//  //Validate product name is shown, matches what was used before
-
-//   await page.locator('[data-test="increase-quantity"]').click();
-//   await page.locator('[data-test="add-to-cart"]').click();
-
-//   //Validate cart icon increase by 1
-//   await page.locator('[data-test="nav-cart"]').click();
-//   //Validate 2 items are present, prices match what was gotten from home page
-//   await page.getByRole('spinbutton', { name: 'Quantity for Cordless Drill' }).click();
-//   await page.getByRole('spinbutton', { name: 'Quantity for Cordless Drill' }).fill('1');
-//   await page.locator('aw-wizard-step').filter({ hasText: 'ItemQuantityPriceTotalThor' }).click();
-//   //Validate price has updated 
-
-  })
+}); // End TC1
 
 test.skip('Checkout process completes successfully', async ({ page }) => {
 
