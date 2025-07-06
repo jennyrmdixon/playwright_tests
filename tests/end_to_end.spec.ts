@@ -28,7 +28,10 @@ test.describe('E2E Checkout Test', () => {
     price: null
   };
 
-  let normalizePrice = (input) => {
+ // Normalizes values for accurate comparison across pages
+ // Remove leading or trailing spaces, and $ sign
+ // Converts number to string
+  let normalizeText = (input) => {
     return String(input).trim().replace(/\$/g, '');
   }
 
@@ -52,10 +55,8 @@ test.describe('E2E Checkout Test', () => {
     const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
     item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
     item_1.price = await PRODUCT_1_CARD.locator('[data-test="product-price"]').textContent();
-    // Remove dollar symbol, if price exists
-    if (item_1.price) {
-      item_1.price = item_1.price.replace('$', '');
-    }
+    item_1.price = normalizeText(item_1.price);
+
     // Click on first product
     // Confirm correct page loads, but don't add to cart
     await PRODUCT_1_CARD.click();
@@ -70,16 +71,12 @@ test.describe('E2E Checkout Test', () => {
 
     // Wait for new product page to load, as indicated by updated product name
     // Ignores spaces added or removed temporarily during the loading process
-
-    // Remove leading or trailing spaces
-    const normalize = (text: string | null) =>
-      (text ?? "").trim().replace(/\s+/g, " ");
     // Get the initial product name, with leading/trailing spaces removed
-    let initialNormalized = normalize(item_1.name);
+    let initialNormalized = normalizeText(item_1.name);
 
     await expect.poll(async () => {
       const currentRaw = await LOCATOR_PRODUCT_NAME.textContent();
-      const currentNormalized = normalize(currentRaw);
+      const currentNormalized = normalizeText(currentRaw);
 
       // Return the normalized text to decide if poll should end
       return currentNormalized;
@@ -106,7 +103,7 @@ test.describe('E2E Checkout Test', () => {
     const PRODUCT_3_CARD = page.locator('[data-test^="product-"]').first();
     item_3.name = await PRODUCT_3_CARD.locator('[data-test="product-name"]').textContent();
     item_3.price = await PRODUCT_3_CARD.locator('[data-test="product-price"]').textContent();
-    item_3.price = normalizePrice(item_3.price);
+    item_3.price = normalizeText(item_3.price);
 
     // Click on third product
     await PRODUCT_3_CARD.click();
@@ -138,10 +135,9 @@ test.describe('E2E Checkout Test', () => {
     await CART_BUTTON.click();
 
     // Validate 2 items are present, prices match what was gotten from home page
-
     // Determine expected display order of products, based on alpha order
-    let item2NameNorm = normalize(item_2.name);
-    let item3NameNorm = normalize(item_3.name);
+    let item2NameNorm = normalizeText(item_2.name);
+    let item3NameNorm = normalizeText(item_3.name);
 
     let item2Order;
     let item3Order;
@@ -160,39 +156,34 @@ test.describe('E2E Checkout Test', () => {
 
     // Check details of item 2
     await expect((page.locator('[data-test = "product-title"]').nth(item2Order))).toHaveText(item2NameNorm);
-    const normPrice1 = normalizePrice(await page.locator('[data-test="product-price"]').nth(item2Order).textContent());
-    expect(normPrice1).toBe(item_2.price);
+    const item2Price = normalizeText(await page.locator('[data-test="product-price"]').nth(item2Order).textContent());
+    expect(item2Price).toBe(item_2.price);
 
     // Check details of item 3
     await expect((page.locator('[data-test = "product-title"]').nth(item3Order))).toHaveText(item3NameNorm);
-    const normPrice2 = normalizePrice(await page.locator('[data-test="product-price"]').nth(item3Order).textContent());
-    expect(normPrice2).toBe(item_3.price);
+    const item3Price = normalizeText(await page.locator('[data-test="product-price"]').nth(item3Order).textContent());
+    expect(item3Price).toBe(item_3.price);
 
-    let cartTotal = (parseFloat(normPrice1) + parseFloat(normPrice2)).toString();
-    let normalizedTotal = normalizePrice(await page.locator('[data-test = "cart-total"]').textContent());
+    let cartTotal = (parseFloat(item2Price) + parseFloat(item3Price)).toString();
+    let normalizedTotal = normalizeText(await page.locator('[data-test = "cart-total"]').textContent());
     expect(normalizedTotal).toEqual(cartTotal);
 
-
+    // Increase quanity of item2 from 1 to 2
     await page.getByRole('spinbutton').nth(item2Order).click();
     await page.getByRole('spinbutton').nth(item2Order).fill('2');
-    //De-select page counter box
+    // De-select item counter box
     await page.locator("body").click({ position: { x: 0, y: 0 } });
 
-
-    let newExpectedTotal = parseFloat(cartTotal) + parseFloat(normPrice1);
-
+    let newExpectedTotal = parseFloat(cartTotal) + parseFloat(item2Price);
     await expect.poll(async () => {
       try {
-        const newTotal = normalizePrice(await page.locator('[data-test = "cart-total"]').textContent());
+        const newTotal = normalizeText(await page.locator('[data-test = "cart-total"]').textContent());
         const newTotalParse = parseFloat(newTotal);
         return newTotalParse;
       } catch {
         return false;
       }
-    },
-      {
-        timeout: 5000, // ⏱️ Set timeout to 6000 milliseconds (6 seconds)
-      }
+    }
     ).toBe(newExpectedTotal)
 
 }); // End TC1
