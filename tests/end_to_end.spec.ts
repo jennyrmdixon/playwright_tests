@@ -28,21 +28,17 @@ test.describe('E2E Checkout Test', () => {
     price: null
   };
 
-  // Normalizes values for accurate comparison across pages
-  // Remove leading or trailing spaces, and $ sign
-  // Converts number to string
+  // Normalizes product details values for accurate comparison across pages
   let normalizeText = (input) => {
     return String(input).trim().replace(/\$/g, '');
   }
 
   test('End to End Test', async ({ page }) => {
 
-    // Define frequently used locator for first test case
+    // Define frequently used locator
     const LOCATOR_PRODUCT_NAME = page.locator('[data-test="product-name"]');
 
     await test.step(`Navigate to first product, do not add to cart`, async () => {
-      // test.step('Complete purchase flow', async ({ page }) => {
-      // NAVIGATE TO FIRST PRODUCT, BUT DON'T ADD TO CART
       // Begin on home page
       await page.goto('https://practicesoftwaretesting.com/');
       await expect(page).toHaveURL('https://practicesoftwaretesting.com/');
@@ -52,7 +48,7 @@ test.describe('E2E Checkout Test', () => {
       await page.locator('[data-test="search-query"]').fill('hammer');
       await page.locator('[data-test="search-submit"]').click();
 
-      // Capture produce name and price of first search result
+      // Capture product name and price of first search result
       await expect(page.locator('[data-test="search-term"]')).toHaveText('hammer');
       await expect(page.locator('[data-test="search_completed"]')).toBeVisible();
       const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
@@ -60,30 +56,22 @@ test.describe('E2E Checkout Test', () => {
       item_1.price = await PRODUCT_1_CARD.locator('[data-test="product-price"]').textContent();
       item_1.price = normalizeText(item_1.price);
 
-      // Click on first product
-      // Confirm correct page loads, but don't add to cart
+      // Click on first product, confirm product details
       await PRODUCT_1_CARD.click();
-      expect(item_1.name).not.toBeNull();
       await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_1.name as string);
-      expect(item_1.price).not.toBeNull();
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_1.price as string));
     }); // End step
 
     await test.step(`Navigate to second product, add to cart`, async () => {
-
-      // NAVIGATE TO SECOND PRODUCT, ADD TO CART
       // Click on first recommended product
       await page.getByText('More information').first().click();
 
       // Wait for new product page to load, as indicated by updated product name
-      // Ignores spaces added or removed temporarily during the loading process
-      // Get the initial product name, with leading/trailing spaces removed
       let initialNormalized = normalizeText(item_1.name);
 
       await expect.poll(async () => {
         const currentRaw = await LOCATOR_PRODUCT_NAME.textContent();
         const currentNormalized = normalizeText(currentRaw);
-
         // Return the normalized text to decide if poll should end
         return currentNormalized;
       }).not.toBe(initialNormalized)
@@ -101,7 +89,6 @@ test.describe('E2E Checkout Test', () => {
 
     await test.step(`Navigate to third product, add to cart`, async () => {
 
-      // NAVIGATE TO THIRD PRODUCT, ADD TO CART
       await page.locator('[data-test="nav-categories"]').click();
       await page.locator('[data-test="nav-power-tools"]').click();
       //Wait for products to fully load after clicking on page 
@@ -116,9 +103,7 @@ test.describe('E2E Checkout Test', () => {
 
       // Click on third product
       await PRODUCT_3_CARD.click();
-      expect(item_3.name).not.toBeNull();
       await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_3.name as string);
-      expect(item_3.price).not.toBeNull();
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_3.price as string));
 
       // Add current item to cart
@@ -140,7 +125,7 @@ test.describe('E2E Checkout Test', () => {
         }
       },
         {
-          timeout: 6000, // ⏱️ Set timeout to 6000 milliseconds (6 seconds)
+          timeout: 6000, 
         }
       ).toBe(true);
       await CART_BUTTON.click();
@@ -166,17 +151,17 @@ test.describe('E2E Checkout Test', () => {
       }
 
       // Check details of item 2
-      await expect((page.locator('[data-test = "product-title"]').nth(item2Order))).toHaveText(item2NameNorm);
+      await expect((page.locator('[data-test="product-title"]').nth(item2Order))).toHaveText(item2NameNorm);
       const item2Price = normalizeText(await page.locator('[data-test="product-price"]').nth(item2Order).textContent());
       expect(item2Price).toBe(item_2.price);
 
       // Check details of item 3
-      await expect((page.locator('[data-test = "product-title"]').nth(item3Order))).toHaveText(item3NameNorm);
+      await expect((page.locator('[data-test="product-title"]').nth(item3Order))).toHaveText(item3NameNorm);
       const item3Price = normalizeText(await page.locator('[data-test="product-price"]').nth(item3Order).textContent());
       expect(item3Price).toBe(item_3.price);
 
       let cartTotal = (parseFloat(item2Price) + parseFloat(item3Price)).toString();
-      let normalizedTotal = normalizeText(await page.locator('[data-test = "cart-total"]').textContent());
+      let normalizedTotal = normalizeText(await page.locator('[data-test="cart-total"]').textContent());
       expect(normalizedTotal).toEqual(cartTotal);
 
       // Increase quanity of item2 from 1 to 2
@@ -188,7 +173,7 @@ test.describe('E2E Checkout Test', () => {
       let newExpectedTotal = parseFloat(cartTotal) + parseFloat(item2Price);
       await expect.poll(async () => {
         try {
-          const newTotal = normalizeText(await page.locator('[data-test = "cart-total"]').textContent());
+          const newTotal = normalizeText(await page.locator('[data-test="cart-total"]').textContent());
           const newTotalParse = parseFloat(newTotal);
           return newTotalParse;
         } catch {
@@ -197,6 +182,7 @@ test.describe('E2E Checkout Test', () => {
       }
       ).toBe(newExpectedTotal)
     }); // End step
+
   }); // End TC1
 
   test.skip('Checkout process completes successfully', async ({ page }) => {
@@ -217,7 +203,7 @@ test.describe('E2E Checkout Test', () => {
     await page.locator('[data-test="postal_code"]').click();
     await page.locator('[data-test="postal_code"]').fill('7461');
     await page.locator('[data-test="proceed-3"]').click();
-    //Validate next page is reached
+    // Validate next page is reached
     await page.locator('[data-test="payment-method"]').selectOption('credit-card');
     await page.locator('[data-test="credit_card_number"]').click();
     await page.locator('[data-test="credit_card_number"]').fill('0000-0000-0000-0000');
@@ -229,7 +215,7 @@ test.describe('E2E Checkout Test', () => {
     await page.locator('[data-test="card_holder_name"]').click();
     await page.locator('[data-test="card_holder_name"]').fill('Jane Doe');
     await page.locator('[data-test="finish"]').click();
-    //Validate success message was reached
+    // Validate success message was reached
   })
 
 });
