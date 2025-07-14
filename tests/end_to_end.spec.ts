@@ -183,10 +183,7 @@ test.describe('E2E Checkout Test', () => {
       ).toBe(newExpectedTotal)
     }); // End step
 
-  }); // End TC1
-
-  test.skip('Checkout process completes successfully', async ({ page }) => {
-
+ await test.step(`Complete checkout`, async () => {
     await page.locator('[data-test="proceed-1"]').click();
     await page.locator('[data-test="email"]').click();
     await page.locator('[data-test="email"]').click();
@@ -203,7 +200,6 @@ test.describe('E2E Checkout Test', () => {
     await page.locator('[data-test="postal_code"]').click();
     await page.locator('[data-test="postal_code"]').fill('7461');
     await page.locator('[data-test="proceed-3"]').click();
-    // Validate next page is reached
     await page.locator('[data-test="payment-method"]').selectOption('credit-card');
     await page.locator('[data-test="credit_card_number"]').click();
     await page.locator('[data-test="credit_card_number"]').fill('0000-0000-0000-0000');
@@ -215,7 +211,11 @@ test.describe('E2E Checkout Test', () => {
     await page.locator('[data-test="card_holder_name"]').click();
     await page.locator('[data-test="card_holder_name"]').fill('Jane Doe');
     await page.locator('[data-test="finish"]').click();
-    // Validate success message was reached
-  })
+
+    await expect(page.locator('[data-test="payment-success-message"]')).toBeVisible();
+ });
+
+
+  });
 
 });
