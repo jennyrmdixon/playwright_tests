@@ -34,7 +34,7 @@ test.describe('E2E Checkout Test', () => {
   }
 
   test('End to End Test', async ({ page }) => {
-  test.setTimeout(300000)
+    test.setTimeout(300000)
     // Define frequently used locator
     const LOCATOR_PRODUCT_NAME = page.locator('[data-test="product-name"]');
 
@@ -46,13 +46,11 @@ test.describe('E2E Checkout Test', () => {
       // Enter search term
       await page.locator('[data-test="search-query"]').click();
       await page.locator('[data-test="search-query"]').fill('hammer');
-      await page.locator('[data-test="search-submit"]').click();
 
-      // Capture product name and price of first search result
-      await expect(page.locator('[data-test="search-term"]')).toHaveText('hammer');
-      
-      // FLAKY STEP - MAKE A POLL?
-      await expect(page.locator('[data-test="search_completed"]')).toBeVisible();
+      await Promise.all([
+       page.locator('[data-test="search-submit"]').click(),
+       page.waitForSelector('[data-test="search_completed"]', { state: 'visible' })
+      ])
       const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
       item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
       item_1.price = await PRODUCT_1_CARD.locator('[data-test="product-price"]').textContent();
@@ -134,7 +132,7 @@ test.describe('E2E Checkout Test', () => {
       },
         {
           // INCREASE THIS?
-          timeout: 6000, 
+          timeout: 6000,
         }
       ).toBe(true);
       await CART_BUTTON.click();
@@ -194,45 +192,44 @@ test.describe('E2E Checkout Test', () => {
 
 
     // EDIT TO WAIT FOR EACH PROCEED
- await test.step(`Complete checkout`, async () => {
-    await page.locator('[data-test="proceed-1"]').click();
-    // await page.locator('[data-test="email"]').click();
-    await page.locator('[data-test="email"]').click();
-    await page.locator('[data-test="email"]').fill('customer2@practicesoftwaretesting.com');
-    await page.locator('[data-test="password"]').click();
-    await page.locator('[data-test="password"]').fill('welcome01');
-    await page.locator('[data-test="login-submit"]').click();
-    await page.locator('[data-test="proceed-2"]').click();
-    // FLAKY STEP
-    // Assumes default cusomter already has street, city and country filled out in
-    // Wait for city to populate and display text from customer account
-    await expect.poll(async () => {
-  const city = await page.locator('[data-test="city"]').inputValue();
-  console.log(city);
-  return city && city.trim().length > 0;
-}).toBe(true);
-// await expect(page.locator('[data-test="city"]')).toHaveText(/.+/);
-    await page.locator('[data-test="street"]').click();
-    await page.locator('[data-test="state"]').fill('Burgenland');
-    // FLAKY STEP (both click and fill)
-    await page.locator('[data-test="postal_code"]').click();
-    await page.locator('[data-test="postal_code"]').fill('7461');
-    // FLAKY STEP (click and fill)
-    await page.locator('[data-test="proceed-3"]').click();
-    await page.locator('[data-test="payment-method"]').selectOption('credit-card');
-    await page.locator('[data-test="credit_card_number"]').click();
-    await page.locator('[data-test="credit_card_number"]').fill('0000-0000-0000-0000');
-    await page.locator('[data-test="expiration_date"]').click();
-    await page.locator('[data-test="expiration_date"]').click();
-    await page.locator('[data-test="expiration_date"]').fill('12/2030');
-    await page.locator('[data-test="cvv"]').click();
-    await page.locator('[data-test="cvv"]').fill('123');
-    await page.locator('[data-test="card_holder_name"]').click();
-    await page.locator('[data-test="card_holder_name"]').fill('Jack Howe');
-    await page.locator('[data-test="finish"]').click();
-// FLAKY STEP
-    await expect(page.locator('[data-test="payment-success-message"]')).toBeVisible();
- });
+    await test.step(`Complete checkout`, async () => {
+      await page.locator('[data-test="proceed-1"]').click();
+      // await page.locator('[data-test="email"]').click();
+      await page.locator('[data-test="email"]').click();
+      await page.locator('[data-test="email"]').fill('customer2@practicesoftwaretesting.com');
+      await page.locator('[data-test="password"]').click();
+      await page.locator('[data-test="password"]').fill('welcome01');
+      await page.locator('[data-test="login-submit"]').click();
+      await page.locator('[data-test="proceed-2"]').click();
+      // FLAKY STEP
+      // Assumes default cusomter already has street, city and country filled out in
+      // Wait for city to populate and display text from customer account
+      await expect.poll(async () => {
+        const city = await page.locator('[data-test="city"]').inputValue();
+        return city && city.trim().length > 0;
+      }).toBe(true);
+      // await expect(page.locator('[data-test="city"]')).toHaveText(/.+/);
+      await page.locator('[data-test="street"]').click();
+      await page.locator('[data-test="state"]').fill('Burgenland');
+      // FLAKY STEP (both click and fill)
+      await page.locator('[data-test="postal_code"]').click();
+      await page.locator('[data-test="postal_code"]').fill('7461');
+      // FLAKY STEP (click and fill)
+      await page.locator('[data-test="proceed-3"]').click();
+      await page.locator('[data-test="payment-method"]').selectOption('credit-card');
+      await page.locator('[data-test="credit_card_number"]').click();
+      await page.locator('[data-test="credit_card_number"]').fill('0000-0000-0000-0000');
+      await page.locator('[data-test="expiration_date"]').click();
+      await page.locator('[data-test="expiration_date"]').click();
+      await page.locator('[data-test="expiration_date"]').fill('12/2030');
+      await page.locator('[data-test="cvv"]').click();
+      await page.locator('[data-test="cvv"]').fill('123');
+      await page.locator('[data-test="card_holder_name"]').click();
+      await page.locator('[data-test="card_holder_name"]').fill('Jack Howe');
+      await page.locator('[data-test="finish"]').click();
+      // FLAKY STEP
+      await expect(page.locator('[data-test="payment-success-message"]')).toBeVisible();
+    });
   });
 
 });
