@@ -48,8 +48,8 @@ test.describe('E2E Checkout Test', () => {
       await page.locator('[data-test="search-query"]').fill('hammer');
 
       await Promise.all([
-       page.locator('[data-test="search-submit"]').click(),
-       page.waitForSelector('[data-test="search_completed"]', { state: 'visible' })
+        page.locator('[data-test="search-submit"]').click(),
+        page.waitForSelector('[data-test="search_completed"]', { state: 'visible' })
       ])
       const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
       item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
@@ -82,11 +82,11 @@ test.describe('E2E Checkout Test', () => {
       await expect(item_1.name).not.toEqual(item_2.name);
 
       // Add current item to cart
-      await page.locator('[data-test="add-to-cart"]').click();
-      // Validate cart displays 1 item added
-
-      // FLAKY STEP - MAKE A POLL
-      await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("1");
+      await Promise.all([
+        page.locator('[data-test="add-to-cart"]').click(),
+        page.waitForSelector('[data-test="cart-quantity"]', { state: 'visible' }),
+      ]);      // Validate cart displays 1 item added
+      await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("1", { timeout: 10000 });
     }); // End step
 
     await test.step(`Navigate to third product, add to cart`, async () => {
@@ -113,7 +113,7 @@ test.describe('E2E Checkout Test', () => {
       await page.locator('[data-test="add-to-cart"]').click();
       // Validate cart displays 1 item added
 
-      //FLAKY STEPS - MAKEA  POLL
+      // FLAKY STEPS 
       await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2");
     }); // End step
 
