@@ -58,6 +58,7 @@ test.describe('E2E Checkout Test', () => {
 
       // Click on first product, confirm product details
       await PRODUCT_1_CARD.click();
+      await LOCATOR_PRODUCT_NAME.waitFor({ state: 'visible' }), 
       await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_1.name as string);
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_1.price as string));
     }); // End step
@@ -109,13 +110,13 @@ test.describe('E2E Checkout Test', () => {
       await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_3.name as string);
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_3.price as string));
 
-      // Add current item to cart
-      await page.locator('[data-test="add-to-cart"]').click();
-      // Validate cart displays 1 item added
-
-      // FLAKY STEPS 
-      await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2");
-    }); // End step
+         // Add current item to cart
+      await Promise.all([
+        page.locator('[data-test="add-to-cart"]').click(),
+        page.waitForSelector('[data-test="cart-quantity"]', { state: 'visible' }),
+      ]);      // Validate cart displays 1 item added
+      await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2", { timeout: 10000 });
+    // }); // End step
 
     await test.step(`Navigate to cart, check details, and increase item quantity`, async () => {
       // Wait until "Added to Cart" pop up is not obstructing cart icon, then navigate to cart
@@ -233,3 +234,5 @@ test.describe('E2E Checkout Test', () => {
   });
 
 });
+});
+
