@@ -114,9 +114,10 @@ test.describe('E2E Checkout Test', () => {
       await Promise.all([
         page.locator('[data-test="add-to-cart"]').click(),
         page.waitForSelector('[data-test="cart-quantity"]', { state: 'visible' }),
-      ]);      // Validate cart displays 1 item added
+      ]);      
+      // Validate cart displays 1 item added
       await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2", { timeout: 10000 });
-    // }); // End step
+    // End step
 
     await test.step(`Navigate to cart, check details, and increase item quantity`, async () => {
       // Wait until "Added to Cart" pop up is not obstructing cart icon, then navigate to cart
@@ -203,7 +204,7 @@ test.describe('E2E Checkout Test', () => {
       await page.locator('[data-test="login-submit"]').click();
       await page.locator('[data-test="proceed-2"]').click();
       // FLAKY STEP
-      // Assumes default cusomter already has street, city and country filled out in
+      // Assumes default customer already has street, city and country filled out in
       // Wait for city to populate and display text from customer account
       await expect.poll(async () => {
         const city = await page.locator('[data-test="city"]').inputValue();
