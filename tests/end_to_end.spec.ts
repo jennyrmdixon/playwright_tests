@@ -112,36 +112,17 @@ test.describe('E2E Checkout Test', () => {
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_3.price as string));
 
          // Add current item to cart
+         // Clean up this section to make sure the 
       await Promise.all([
         page.locator('[data-test="add-to-cart"]').click(),
         page.waitForSelector('[data-test="cart-quantity"]', { state: 'visible' }),
       ]);      
-      // Validate cart displays 1 item added
+      // Validate cart displays 2 items added
       await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2", { timeout: 10000 });
     // End step
 
     await test.step(`Navigate to cart, check details, and increase item quantity`, async () => {
-      // Wait until "Added to Cart" pop up is not obstructing cart icon, then navigate to cart
-      // const CART_BUTTON = page.locator('[data-test="nav-cart"]');
-
-      // FLAKY SECTION  
-   let cartButton = page.locator('[data-test="nav-cart"]');
-
-await expect.poll(async () => {
-  try {
-    cartButton = page.locator('[data-test="nav-cart"]'); // Refresh locator each time
-    await cartButton.click({ trial: true });
-    return true;
-  } catch {
-    return false;
-  }
-}, {
-  timeout: 6000,
-}).toBe(true);
-
-await cartButton.click();
-
-
+    await page.locator('[data-test="nav-cart"]').click();
       // Validate 2 items are present, prices match what was gotten from home page
       // Determine expected display order of products, based on alpha order
       let item2NameNorm = normalizeText(item_2.name);
