@@ -34,7 +34,9 @@ test.describe('E2E Checkout Test', () => {
   }
 
   test('End to End Test', async ({ page }) => {
-    test.setTimeout(300000)
+    test.setTimeout(120000) // 2m overall for test time
+    page.setDefaultTimeout(30000); // 30 s for all locator actions & waits
+
     // Define frequently used locator
     const LOCATOR_PRODUCT_NAME = page.locator('[data-test="product-name"]');
 
@@ -49,7 +51,8 @@ test.describe('E2E Checkout Test', () => {
 
       await Promise.all([
         page.locator('[data-test="search-submit"]').click(),
-        page.waitForSelector('[data-test="search_completed"]', { state: 'visible' })
+        // Extended wait to this step - search may take up to 1 minute to complete
+        page.waitForSelector('[data-test="search_completed"]', { state: 'visible', timeout: 60000 })
       ])
       const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
       item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
@@ -90,6 +93,7 @@ test.describe('E2E Checkout Test', () => {
       // Validate cart displays 1 item added
       await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("1");
     }); // End step
+    
 
     await test.step(`Navigate to third product, add to cart`, async () => {
 
@@ -106,8 +110,9 @@ test.describe('E2E Checkout Test', () => {
       item_3.price = normalizeText(item_3.price);
 
       // Click on third product
-      await PRODUCT_3_CARD.click();
-      // FLAKY STEP - MAKE A POLL
+        await PRODUCT_3_CARD.click(),
+     
+      // FLAKY STEP DUE TO SLOW LOADING - TRY EXTENDING  STEP 
       await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_3.name as string);
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_3.price as string));
 
@@ -117,12 +122,12 @@ test.describe('E2E Checkout Test', () => {
         page.locator('[data-test="add-to-cart"]').click(),
         page.waitForSelector('[data-test="cart-quantity"]', { state: 'visible' }),
       ]);      
-      // Validate cart displays 2 items added
-      await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2", { timeout: 10000 });
+      // Validate cart displays 2 items added - remove timeout??
+      await expect(page.locator('[data-test="cart-quantity"]')).toHaveText("2");
     // End step
 
-    await test.step(`Navigate to cart, check details, and increase item quantity`, async () => {
-    await page.locator('[data-test="nav-cart"]').click();
+      await test.step(`Navigate to cart, check details, and increase item quantity`, async () => {
+      await page.locator('[data-test="nav-cart"]').click();
       // Validate 2 items are present, prices match what was gotten from home page
       // Determine expected display order of products, based on alpha order
       let item2NameNorm = normalizeText(item_2.name);
@@ -157,7 +162,7 @@ test.describe('E2E Checkout Test', () => {
       let normalizedTotal = normalizeText(await page.locator('[data-test="cart-total"]').textContent());
       expect(normalizedTotal).toEqual(cartTotal);
 
-      // Increase quanity of item2 from 1 to 2
+      // Increase quanity of item 2 from 1 to 2
       await page.getByRole('spinbutton').nth(item2Order).click();
       await page.getByRole('spinbutton').nth(item2Order).fill('2');
       // De-select item counter box
@@ -177,8 +182,8 @@ test.describe('E2E Checkout Test', () => {
     }); // End step
 
 
-    // EDIT TO WAIT FOR EACH PROCEED
-    await test.step(`Complete checkout`, async () => {
+      // EDIT TO WAIT FOR EACH PROCEED
+      await test.step(`Complete checkout`, async () => {
       await page.locator('[data-test="proceed-1"]').click();
       // await page.locator('[data-test="email"]').click();
       await page.locator('[data-test="email"]').click();
@@ -187,7 +192,6 @@ test.describe('E2E Checkout Test', () => {
       await page.locator('[data-test="password"]').fill('welcome01');
       await page.locator('[data-test="login-submit"]').click();
       await page.locator('[data-test="proceed-2"]').click();
-      // FLAKY STEP
       // Assumes default customer already has street, city and country filled out in
       // Wait for city to populate and display text from customer account
       await expect.poll(async () => {
