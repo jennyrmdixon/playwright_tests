@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/* GitHub Actions will set CI to true */
+/* Set headless to false locally, but true in CI */
+const isCI = !!process.env.CI; 
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -39,7 +43,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        headless: false
+        headless: isCI
       },
     },
 
