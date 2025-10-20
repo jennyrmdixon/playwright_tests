@@ -29,8 +29,9 @@ test.describe('E2E Checkout Test', () => {
   };
 
   // Normalizes product details values for accurate comparison across pages
-  let normalizeText = (input) => {
-    return String(input).trim().replace(/\$/g, '');
+  let normalizeText = (input: string | null) => {
+    expect(input).not.toBeNull();
+    return input!.trim().replace(/\$/g, '');
   }
 
   test('End to End Test', async ({ page }) => {
@@ -56,7 +57,10 @@ test.describe('E2E Checkout Test', () => {
       ])
       const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
       item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
+      expect(item_1.name, 'Product 1 name should not be null').not.toBeNull();
+
       item_1.price = await PRODUCT_1_CARD.locator('[data-test="product-price"]').textContent();
+      expect(item_1.price, 'Product 1 price should not be null').not.toBeNull();
       item_1.price = normalizeText(item_1.price);
 
       // Click on first product, confirm product details
@@ -64,7 +68,7 @@ test.describe('E2E Checkout Test', () => {
       await LOCATOR_PRODUCT_NAME.waitFor({ state: 'visible' }),
         await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_1.name as string);
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_1.price as string));
-    }); // End step
+    }); // End step 
 
     await test.step(`Navigate to second product, add to cart`, async () => {
       // Click on first recommended product
@@ -73,16 +77,25 @@ test.describe('E2E Checkout Test', () => {
       // Wait for new product page to load, as indicated by updated product name
       let initialNormalized = normalizeText(item_1.name);
 
-      await expect.poll(async () => {
-        const currentRaw = await LOCATOR_PRODUCT_NAME.textContent();
-        const currentNormalized = normalizeText(currentRaw);
-        // Return the normalized text to decide if poll should end
-        return currentNormalized;
-      }).not.toBe(initialNormalized)
+      await expect
+        .poll(async () => {
+          const currentRaw = await LOCATOR_PRODUCT_NAME.textContent();
+          // Only proceed if the element actually has text
+          if (currentRaw && currentRaw.trim() !== "") {
+            return normalizeText(currentRaw);
+          }
+          return undefined;
+        }, {
+          message: "Product 2 name on product page should eventually update and not stay empty",
+        })
+        .not.toBe(initialNormalized);
 
       // Capture details of new product page
       item_2.name = await LOCATOR_PRODUCT_NAME.textContent();
+      expect(item_2.name, 'Product 2 name should not be null').not.toBeNull();
+      
       item_2.price = await page.locator('[data-test="unit-price"]').textContent();
+      expect(item_2.name, 'Product 2 price should not be null').not.toBeNull();
       await expect(item_1.name).not.toEqual(item_2.name);
 
       // Add current item to cart
@@ -106,12 +119,15 @@ test.describe('E2E Checkout Test', () => {
 
       const PRODUCT_3_CARD = page.locator('[data-test^="product-"]').first();
       item_3.name = await PRODUCT_3_CARD.locator('[data-test="product-name"]').textContent();
+      expect(item_3.name, 'Product 3 name should not be null').not.toBeNull();
+     
       item_3.price = await PRODUCT_3_CARD.locator('[data-test="product-price"]').textContent();
+      expect(item_3.price, 'Product 3 price should not be null').not.toBeNull();
       item_3.price = normalizeText(item_3.price);
 
       // Click on third product
       await PRODUCT_3_CARD.click(),
-        await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_3.name as string);
+      await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_3.name as string);
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_3.price as string));
 
       // Add current item to cart
@@ -129,8 +145,8 @@ test.describe('E2E Checkout Test', () => {
         let item2NameNorm = normalizeText(item_2.name);
         let item3NameNorm = normalizeText(item_3.name);
 
-        let item2Order;
-        let item3Order;
+        let item2Order: number;
+        let item3Order: number;
 
         if (item2NameNorm < item3NameNorm) {
           item2Order = 0;
@@ -141,7 +157,7 @@ test.describe('E2E Checkout Test', () => {
           item2Order = 1;
         }
         else {
-          console.log("error")
+          throw new Error("Unexpected: item names are equal");
         }
 
         // Check details of item 2
