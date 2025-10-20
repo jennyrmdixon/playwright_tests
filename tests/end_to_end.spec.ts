@@ -52,8 +52,7 @@ test.describe('E2E Checkout Test', () => {
 
       await Promise.all([
         page.locator('[data-test="search-submit"]').click(),
-        // Slow step - search may take up to 1 minute to complete
-        page.waitForSelector('[data-test="search_completed"]', { state: 'visible', timeout: 60000 })
+        page.waitForSelector('[data-test="search_completed"]', { state: 'visible'})
       ])
       const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
       item_1.name = await PRODUCT_1_CARD.locator('[data-test="product-name"]').textContent();
@@ -66,7 +65,7 @@ test.describe('E2E Checkout Test', () => {
       // Click on first product, confirm product details
       await PRODUCT_1_CARD.click();
       await LOCATOR_PRODUCT_NAME.waitFor({ state: 'visible' }),
-        await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_1.name as string);
+      await expect(LOCATOR_PRODUCT_NAME).toHaveText(item_1.name as string);
       await expect(page.locator('[data-test="unit-price"]')).toHaveText(new RegExp(item_1.price as string));
     }); // End step 
 
@@ -75,20 +74,19 @@ test.describe('E2E Checkout Test', () => {
       await page.getByText('More information').first().click();
 
       // Wait for new product page to load, as indicated by updated product name
-      let initialNormalized = normalizeText(item_1.name);
-
-      await expect
-        .poll(async () => {
-          const currentRaw = await LOCATOR_PRODUCT_NAME.textContent();
-          // Only proceed if the element actually has text
-          if (currentRaw && currentRaw.trim() !== "") {
-            return normalizeText(currentRaw);
+      // During loading, product name may temporarily display as the item 1 name with spaces added/removed
+      // The intent of this step is to wait until the name updates to an entirely different product name
+      let productOneNameNormalized = normalizeText(item_1.name);
+      
+      await expect.poll(async () => {
+          const currentRawProductName = await LOCATOR_PRODUCT_NAME.textContent();
+          // Only proceed if the element has text
+          if (currentRawProductName && currentRawProductName.trim() !== "") { 
+          return normalizeText(currentRawProductName);
           }
-          return undefined;
-        }, {
-          message: "Product 2 name on product page should eventually update and not stay empty",
+            return undefined; 
         })
-        .not.toBe(initialNormalized);
+        .not.toBe(productOneNameNormalized);
 
       // Capture details of new product page
       item_2.name = await LOCATOR_PRODUCT_NAME.textContent();
@@ -187,7 +185,7 @@ test.describe('E2E Checkout Test', () => {
             const newTotalParse = parseFloat(newTotal);
             return newTotalParse;
           } catch {
-            return false;
+            return undefined;
           }
         }
         ).toBe(newExpectedTotal)
