@@ -1,6 +1,7 @@
 name: Playwright Tests
 run-name: >
-  Playwright ${{ github.event.inputs.runType || 'push' }} - ${{ github.ref_name }} ${{ github.sha[0:7] }}
+  Playwright ${{ github.event.inputs.runType || 'push' }} - ${{ github.ref_name }} - ${{ github.event.head_commit.message || github.sha }}
+
 
 on:
   push:
