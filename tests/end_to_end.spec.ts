@@ -110,7 +110,7 @@ test.describe('E2E Checkout Test', () => {
 
       await page.locator('[data-test="nav-categories"]').click();
       await page.locator('[data-test="nav-power-tools"]').click();
-      //Wait for products to fully load after clicking on page 
+      //Wait for products to fully load after selecting category
       await page.locator('[data-test^="product-"]').first().waitFor({ state: 'visible' });
       // Filter by first category
       await (page.locator('[data-test^="category-"]').nth(1)).check();
@@ -202,7 +202,7 @@ test.describe('E2E Checkout Test', () => {
         await page.locator('[data-test="login-submit"]').click();
         // Checkout page 2
         await page.locator('[data-test="proceed-2"]').click();
-        // Assumes default customer already has street, city and country filled out in
+        // Assumes default customer already has street, city and country filled out
         // Wait for city to populate and display text from customer account
         await expect.poll(async () => {
           const city = await page.locator('[data-test="city"]').inputValue();
