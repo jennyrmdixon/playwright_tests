@@ -9,15 +9,9 @@
  *              logic to determine if the form can be submitted. 
  *              Specific validations include:
  *
- *              1. A field will only be accepted as valid if it is within the limit of 100 characters
- *                  - A field with 99 characters may be accepted
- *                  - A field with 100 characters entered will not be accepted
+ *              1. A field will only be accepted as valid if it is within the character limit
  *
- *              2. Address cannot be submitted if a field is missing or invalid
- *                  - Address cannot be submitted if 1 field is invalid
- *                  - Address cannot be submitted if all fields are invalid
- *                  - Address cannot be submitted if 1 field is missing
- *                  - Address cannot be submitted if all fields are missing
+ *              2. Address cannot be submitted if any field is missing
  * 
  *              3. Address will be accepted if all fields are filled in from customer account (in guest checkout scenario)
  *
@@ -38,7 +32,9 @@
 
 import { test, expect, Page } from '@playwright/test';
 
-// Helper function to set preconditions for various flows
+test.describe('Billing Address Test', () => {
+
+    // Helper function to set preconditions for various flows
 
 async function setPreconditions(testCase: string, page: Page,) {
     // Begin on home page
@@ -47,29 +43,87 @@ async function setPreconditions(testCase: string, page: Page,) {
     await expect(page.locator('[data-test="nav-categories"]')).toMatchAriaSnapshot(`- button "Categories"`);
     await page.locator('[data-test="nav-categories"]').click();
     await page.locator('[data-test="nav-hand-tools"]').click();
-    const PRODUCT_1_CARD = page.locator('[data-test^="product-"]').first();
-    // Wait for product name to load, then click? Confirm best way to handle this step
-    await PRODUCT_1_CARD.locator('[data-test="product-name"]').click();
+    await page.locator('[data-test^="product-"]').first().click();
     await page.locator('[data-test="add-to-cart"]').click();
     await page.locator('[data-test="nav-cart"]').click();
     await page.locator('[data-test="proceed-1"]').click();
 
     if (testCase === "noAccount"){
-        await page.locator('a[href = "#guest-tab"]').click();
+        const GUEST = {
+            firstName: "Jack",
+            lastName: "Howe",
+            email: "customer101@practicesoftwaretesting.com"
+        }
+        await page.locator('a[href="#guest-tab"]').click();
+        await page.locator('[data-test="guest-first-name"]').fill(GUEST.firstName)
+        await page.locator('[data-test="guest-last-name"]').fill(GUEST.lastName)
+        await page.locator('[data-test="guest-email"]').fill(GUEST.email)
+        await page.locator('[data-test="guest-submit"]').click();
+        await page.locator('[data-test="proceed-2-guest"]').click();
     }
 
 }
 
-test.describe('Billing Address Test', () => {
+const BILLING_ADDRESS_FIELDS = {
+  street: '[data-test="street"]',
+  city: '[data-test="city"]',
+  state: '[data-test="state"]',
+  country: '[data-test="country"]',
+  postal: '[data-test="postal_code"]',
+}
 
 test('Guest Checkout Flow', async ({page}) => {
 
     test.setTimeout(120000) // 2m overall for test time
     await setPreconditions("noAccount", page);
 
-    // Preconditions
-    // Test character limits
-    // Address cannot be submitted if field is missing or invalid
+    async function validateProceedDisabled() {
+    let PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
+    await expect(PROCEED_BUTTON).toBeDisabled();
+    }
+
+    await test.step("Confirm character limits for fields", async() => {
+
+    const CHAR_TEXT_0 = "0";
+    // Postal/zip code field allows max 10 characters
+    const CHAR_TEXT_10 = "012345 AB-";
+    const CHAR_TEXT_11 = "012345 AB-C";
+    // Country, city, and state fields allow max 40 characters
+    const CHAR_TEXT_40 = "abc 124 ghi jkl mno pqrs tuv wxyzz AB. D";
+    const CHAR_TEXT_41 = "abc 124 ghi jkl mno pqrs tuv wxyzz AB. DC";
+    // Street field allows max 70 characters
+    const CHAR_TEXT_70 = "abc def ghi jkl mno pqr's tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !";
+    const CHAR_TEXT_71 = "abc def ghi jkl mno pqr's tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !§";
+
+    // Only street field has invalid length
+    await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_71);
+    await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_40);
+    await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
+    await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
+    await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
+    validateProceedDisabled();
+
+    // Only city field has invalid length
+    await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_70);
+    await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_41);
+    validateProceedDisabled();
+    
+    // Only state field has invalid length
+    await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_40);
+    await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_41);
+    validateProceedDisabled();
+
+    // Only country field has invalid length
+    await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
+    await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_41);
+    validateProceedDisabled();
+
+    // Only zip field has invalid length
+    await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
+    await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_11);
+    validateProceedDisabled();
+    })
+    // Address cannot be submitted if field if any field is missing
     // Address can be submitted once fields are filled in
 
 })
