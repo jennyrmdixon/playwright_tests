@@ -1,4 +1,6 @@
-{
+{  
+  "type": "module",
+
   "devDependencies": {
     "@playwright/test": "^1.53.2",
     "@types/node": "^22.14.1",
