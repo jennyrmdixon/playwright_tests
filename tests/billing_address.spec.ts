@@ -31,7 +31,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import type {Page} from '@playwright/test'; 
+import type { Page } from '@playwright/test';
 
 test.describe('Billing Address Test', () => {
 
@@ -78,23 +78,31 @@ test.describe('Billing Address Test', () => {
         test.setTimeout(120000) // 2m overall for test time
         await setPreconditions("noAccount", page);
 
+        const CHAR_TEXT_0 = "";
+        // Postal/zip code field allows max 10 characters
+        const CHAR_TEXT_10 = "012345 AB-";
+        const CHAR_TEXT_11 = "012345 AB-C";
+        // Country, city, and state fields allow max 40 characters
+        const CHAR_TEXT_40 = "abc 124 ghi jkl mno pqrs tuv wxyzz AB. D";
+        const CHAR_TEXT_41 = "abc 124 ghi jkl mno pqrs tuv wxyzz AB. DC";
+        // Street field allows max 70 characters
+        const CHAR_TEXT_70 = "abc def ghi jkl mno pqr's tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !";
+        const CHAR_TEXT_71 = "abc def ghi jkl mno pqr's tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !§";
+
+
         async function validateProceedDisabled() {
             let PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
             await expect(PROCEED_BUTTON).toBeDisabled();
         }
 
-        await test.step("Confirm character limits for fields", async () => {
+        async function validateProceedEnabled() {
+            let PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
+            await expect(PROCEED_BUTTON).not.toBeDisabled();
+        }
 
-            const CHAR_TEXT_0 = "0";
-            // Postal/zip code field allows max 10 characters
-            const CHAR_TEXT_10 = "012345 AB-";
-            const CHAR_TEXT_11 = "012345 AB-C";
-            // Country, city, and state fields allow max 40 characters
-            const CHAR_TEXT_40 = "abc 124 ghi jkl mno pqrs tuv wxyzz AB. D";
-            const CHAR_TEXT_41 = "abc 124 ghi jkl mno pqrs tuv wxyzz AB. DC";
-            // Street field allows max 70 characters
-            const CHAR_TEXT_70 = "abc def ghi jkl mno pqr's tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !";
-            const CHAR_TEXT_71 = "abc def ghi jkl mno pqr's tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !§";
+        // Validate fully empty field cannot be submitted
+
+        await test.step("Confirm character limits for fields", async () => {
 
             // Only street field has invalid length
             await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_71);
@@ -123,10 +131,64 @@ test.describe('Billing Address Test', () => {
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_11);
             validateProceedDisabled();
-        }) // End step 'confirm character limits for fields'
+        }) // End step 
 
-        // Address cannot be submitted if field if any field is missing
-        // Address can be submitted once fields are filled in
+        await test.step("Validate form cannot be submitted if any field is blank", async () => {
+            // Only zip field is blank
+            await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_0);
+            validateProceedDisabled();
+
+            // Only country field is blank
+            await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
+            await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_0);
+            validateProceedDisabled();
+
+            // Only state field is blank
+            await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
+            await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_0);
+            validateProceedDisabled();
+
+            // Only city field is blank
+            await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
+            await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_0);
+            validateProceedDisabled();
+
+            // Only street field is blank
+            await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_40);
+            await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_0);
+            validateProceedDisabled();
+
+        }); // End step 
+
+        await test.step("Exception tests - validate form cannot be submitted if all fields are missing or invalid7", async () => {
+           // All fields blank
+            await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_0);
+            await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_0);
+            await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_0);
+            await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_0);
+            await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_0);
+            validateProceedDisabled();
+
+            // All fields invalid 
+            await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_71);
+            await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_41);
+            await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_41);
+            await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_41);
+            await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_11);
+            validateProceedDisabled();
+        }); // End step
+
+        await test.step("Test form can be submitted when all fields are filled with valid character counts", async () => {
+            await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_70);
+            await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_40);
+            await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
+            await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
+            await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
+            validateProceedEnabled();
+        });
+
+        // Exception test - cannot be submitted if fields are a mix of missing and invalid
+        // Address can be submitted once fields are filled in and have valid character counts
     })
     // End test case "Guest Checkout Flow"
 
