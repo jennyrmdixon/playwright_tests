@@ -1,10 +1,10 @@
 /**
  * ================================================================
- * Billing Address Entry Test
+ * Billing Address Form Entry Test
  * ----------------------------------------------------------------
  * Description :
  * 
- *              This test focuses on the billing address step of the checkout workflow.
+ *              This test focuses on the billing address form within the checkout workflow.
  *              The purpose of the test is to validate that the form uses expected validation
  *              logic to determine if the form can be submitted. 
  *              
@@ -16,7 +16,7 @@
  * 
  *              3. Form can be submitted if all fields are filled and within character limit
  *              
- *              4. Form logic is conistent whether it is reached through guest checkout flow or existing account
+ *              4. Form logic is consistent whether it is reached through guest checkout flow or existing account
  * 
  * Author      : Jenny Dixon
  * ================================================================
@@ -111,7 +111,6 @@ test.describe('Billing Address Test', () => {
 
     test('Guest Checkout Flow', async ({ page }) => {
 
-        test.setTimeout(120000) // 2m overall for test time
         await setPreconditions("noAccount", page);
 
         // Validate fully empty field cannot be submitted
@@ -199,12 +198,11 @@ test.describe('Billing Address Test', () => {
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
             validateProceedEnabled(page);
-        });
+        }); // End step
     }) // End test case "Guest Checkout Flow"
 
     test('Existing User Checkout Flow - Account Details Partly Filled', async ({page}) => {
 
-        test.setTimeout(120000) // 2m overall for test time
         await setPreconditions("account1", page);
 
         await test.step("Validate form cannot be submitted if user data is partly filled in", async () => {
@@ -213,21 +211,20 @@ test.describe('Billing Address Test', () => {
             await expect(page.locator(BILLING_ADDRESS_FIELDS.state)).toHaveValue("");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.country)).toHaveValue("Austria");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.postal)).toHaveValue("");
-        validateProceedDisabled(page);
-        });
+            validateProceedDisabled(page);
+        }); // End step
 
         await test.step("Validate form can be submitted after fields filled in", async () => {
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
             validateProceedEnabled(page);
-        });
+        }); // End step
 
     }) // End test case "Existing User Checkout Flow - Account Details Partly Filled"
 
-    // Test case temporarily disabled, until website adds
+    // Test case temporarily disabled, until website adds ability to creat new account
     test.skip('Existing User Checkout Flow - Account Details Pre-Filled', async ({page}) => {
 
-        test.setTimeout(120000) // 2m overall for test time
         await setPreconditions("account2", page);
 
         await test.step("Validate form can be submitted if all user data is autofilled", async () => {
@@ -237,8 +234,7 @@ test.describe('Billing Address Test', () => {
             await expect(page.locator(BILLING_ADDRESS_FIELDS.country)).toHaveValue("USA");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.postal)).toHaveValue("90001");
             validateProceedEnabled(page);
-        });
-
-    }) // End test case "Existing User Checkout Flow - Account Details Partly Filled"
+        }); // End step   
+    }); // End test case "Existing User Checkout Flow - Account Details Pre-Filled"
 
 }) // End Billing Address Test
