@@ -27,9 +27,11 @@ import type { Page } from '@playwright/test';
 
 test.describe('Billing Address Test', () => {
 
+    type checkoutFlow = "noAccount" | "account1" | "account2";
+
     // Helper function to set preconditions for various flows
 
-    async function setPreconditions(testCase: string, page: Page,) {
+    async function setPreconditions(testCase: checkoutFlow, page: Page) {
         // Begin on home page
         await page.goto('https://practicesoftwaretesting.com/');
         await expect(page).toHaveURL('https://practicesoftwaretesting.com/');
@@ -87,15 +89,14 @@ test.describe('Billing Address Test', () => {
         postal: '[data-test="postal_code"]',
     }
 
-    
     async function validateProceedDisabled(page: Page) {
-         let PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
+         const PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
          await expect(PROCEED_BUTTON).toBeDisabled();
     }
 
     async function validateProceedEnabled(page: Page) {
-         let PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
-         await expect(PROCEED_BUTTON).not.toBeDisabled();
+         const PROCEED_BUTTON = page.locator('[data-test="proceed-3"]');
+         await expect(PROCEED_BUTTON).toBeEnabled();
     }
 
     const CHAR_TEXT_0 = "";
@@ -123,53 +124,53 @@ test.describe('Billing Address Test', () => {
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only city field has invalid length
             await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_70);
             await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_41);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only state field has invalid length
             await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_41);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only country field has invalid length
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_41);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only zip field has invalid length
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_11);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
         }) // End step 
 
         await test.step("Validate form cannot be submitted if any field is blank", async () => {
             // Only zip field is blank
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_0);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only country field is blank
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_0);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only state field is blank
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_0);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only city field is blank
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_0);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // Only street field is blank
             await page.locator(BILLING_ADDRESS_FIELDS.city).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_0);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
         }); // End step 
 
@@ -180,7 +181,7 @@ test.describe('Billing Address Test', () => {
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_0);
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_0);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_0);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
 
             // All fields invalid 
             await page.locator(BILLING_ADDRESS_FIELDS.street).fill(CHAR_TEXT_71);
@@ -188,7 +189,7 @@ test.describe('Billing Address Test', () => {
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_41);
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_41);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_11);
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
         }); // End step
 
         await test.step("Test form can be submitted when all fields are filled with valid character counts", async () => {
@@ -197,7 +198,7 @@ test.describe('Billing Address Test', () => {
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.country).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
-            validateProceedEnabled(page);
+            await validateProceedEnabled(page);
         }); // End step
     }) // End test case "Guest Checkout Flow"
 
@@ -211,13 +212,13 @@ test.describe('Billing Address Test', () => {
             await expect(page.locator(BILLING_ADDRESS_FIELDS.state)).toHaveValue("");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.country)).toHaveValue("Austria");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.postal)).toHaveValue("");
-            validateProceedDisabled(page);
+            await validateProceedDisabled(page);
         }); // End step
 
         await test.step("Validate form can be submitted after fields filled in", async () => {
             await page.locator(BILLING_ADDRESS_FIELDS.state).fill(CHAR_TEXT_40);
             await page.locator(BILLING_ADDRESS_FIELDS.postal).fill(CHAR_TEXT_10);
-            validateProceedEnabled(page);
+            await validateProceedEnabled(page);
         }); // End step
 
     }) // End test case "Existing User Checkout Flow - Account Details Partly Filled"
@@ -233,7 +234,7 @@ test.describe('Billing Address Test', () => {
             await expect(page.locator(BILLING_ADDRESS_FIELDS.state)).toHaveValue("CA");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.country)).toHaveValue("USA");
             await expect(page.locator(BILLING_ADDRESS_FIELDS.postal)).toHaveValue("90001");
-            validateProceedEnabled(page);
+            await validateProceedEnabled(page);
         }); // End step   
     }); // End test case "Existing User Checkout Flow - Account Details Pre-Filled"
 
