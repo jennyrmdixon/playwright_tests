@@ -5,8 +5,8 @@
  * Description :
  * 
  *              This test focuses on the billing address form within the checkout workflow.
- *              The purpose of the test is to validate that the form uses expected validation
- *              logic to determine if the form can be submitted. 
+ *              The purpose of the test is to validate that the form uses expected logic to determine 
+ *              if the form can be submitted. 
  *              
  *              Specific validations include:
  *
@@ -27,9 +27,9 @@ import type { Page } from '@playwright/test';
 
 test.describe('Billing Address Test', () => {
 
-    type checkoutFlow = "noAccount" | "account1" | "account2";
-
     // Helper function to set preconditions for various flows
+
+    type checkoutFlow = "noAccount" | "account1" | "account2";
 
     async function setPreconditions(testCase: checkoutFlow, page: Page) {
         // Begin on home page
@@ -223,7 +223,7 @@ test.describe('Billing Address Test', () => {
 
     }) // End test case "Existing User Checkout Flow - Account Details Partly Filled"
 
-    // Test case temporarily disabled, until website adds ability to creat new account
+    // Test case temporarily disabled, until website adds ability to create new account
     test.skip('Existing User Checkout Flow - Account Details Pre-Filled', async ({page}) => {
 
         await setPreconditions("account2", page);
